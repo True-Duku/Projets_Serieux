@@ -70,14 +70,45 @@ model = MiniGPT(vocab_size)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
 criterion = nn.CrossEntropyLoss()
 
+# ======= NE FAIT PAS CE QUI EST DEMANDE ==============
 # Text insuffisant pour entrainer le modèle => vrai corpus
-user_input = input("Pose-moi une question : ")
-text = user_input
-tokenized = tokenizer(text, return_tensors="pt")
-input_ids = tokenized["input_ids"]
-target_ids = input_ids.clone()
-target_ids[:, :-1] = input_ids[:, 1:]
-train(model, input_ids, target_ids, optimizer, criterion)
-
-variable = generate(model, text)
+#user_input = input("Pose-moi une question : ")
+#text = user_input
+#tokenized = tokenizer(text, return_tensors="pt")
+#input_ids = tokenized["input_ids"]
+#target_ids = input_ids.clone()
+#target_ids[:, :-1] = input_ids[:, 1:]
+#train(model, input_ids, target_ids, optimizer, criterion)
+#variable = generate(model, text)
 # print("Texte généré :",variable)
+
+# ==== BLOCK DE CODE MODIFIE POUR UN VRAI ENTRAINEMENT ====
+# === ENTRAÎNEMENT À PARTIR D'UN CORPUS TEXTE ===
+
+# Charger le corpus depuis un fichier texte
+with open("corpus.txt", "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+# Préparer les entrées et cibles tokenisées
+inputs = []
+targets = []
+
+for line in lines:
+    line = line.strip()
+    if not line:
+        continue  # ignorer les lignes vides
+    tokenized = tokenizer(line, return_tensors="pt")["input_ids"]
+    target = tokenized.clone()
+    target[:, :-1] = tokenized[:, 1:]  # décalage pour prédiction auto-régressive
+
+    inputs.append(tokenized)
+    targets.append(target)
+
+# Entraîner le modèle sur toutes les séquences du corpus
+train(model, inputs, targets, optimizer, criterion)
+
+# Utilisation après l'entraînement : génération à partir d'une question
+user_input = input("Pose-moi une question : ")
+response = generate(model, user_input)
+print("Texte généré :", response)
+
